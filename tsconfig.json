@@ -1,0 +1,15 @@
+{
+	"compilerOptions": {
+		"target": "ES5",
+		"module": "CommonJS",
+		"declaration": true,
+		"resolveJsonModule": true,
+		"strictNullChecks": true,
+		"esModuleInterop": true,
+		"skipLibCheck": true,
+		"outDir": "./_dist",
+		"rootDir": "."
+	},
+	
+	"exclude": [ "_dist" ]
+}

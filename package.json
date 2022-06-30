@@ -1,0 +1,27 @@
+{
+	"name": "pgdelegate",
+	"version": "0.1.1",
+	"description": "A library provides easy use of PostgresSQL library",
+	"main": "_dist/pgdelegate.js",
+	"scripts": {
+		"prebuild": "rm -rf _dist",
+		"build": "tsc",
+		"postbuild": "copyfiles -e \"./node_modules/**/*\" -e \"./_dist/**/*\" \"./**/*.js\" \"./**/*.d.ts\" ./_dist"
+	},
+	"keywords": [
+		"Postgre",
+		"PostgreSQL",
+		"Postgres"
+	],
+	"author": "JCloudYu",
+	"license": "ISC",
+	"dependencies": {
+		"@types/pg-format": "^1.0.2",
+		"pg": "^8.7.3",
+		"pg-format": "^1.0.4"
+	},
+	"devDependencies": {
+		"@types/pg": "^8.6.5",
+		"copyfiles": "^2.4.1"
+	}
+}
