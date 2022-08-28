@@ -8,7 +8,7 @@ export declare type PostgresSessionInitOptions = {
 } & Omit<postgres.PoolConfig, 'user' | 'password' | 'database' | 'port'>;
 declare class PGDelegate {
     static init(conn_info: PostgresSessionInitOptions): Promise<PGDelegate>;
-    static format(text: string, values: any[]): string;
+    static format(text: string, values?: any[]): string;
     get is_connected(): boolean;
     release(): Promise<void>;
     query<R1 = any, ValueType extends any[] = any>(text: string, values?: ValueType): Promise<postgres.QueryResult<R1>>;

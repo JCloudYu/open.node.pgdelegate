@@ -29,11 +29,11 @@ class PGDelegate {
 
 		const instance = new PGDelegate();
 		const pool = new postgres.Pool({
-			user:uri_info.username!,
-			password:uri_info.password!,
+			user:decodeURIComponent(uri_info.username||''),
+			password:decodeURIComponent(uri_info.password||''),
 			host:uri_info.hostname!,
 			port,
-			database:db_name,
+			database:decodeURIComponent(db_name),
 			...conn_options
 		});
 		__PGDelegate.set(instance, {pool});
@@ -45,8 +45,8 @@ class PGDelegate {
 		return instance;
 	}
 
-	static format(text:string, values:any[]):string {
-		return PGFormat(text, values)
+	static format(text:string, values:any[]=[]):string {
+		return PGFormat(text, ...values)
 	}
 
 	get is_connected():boolean {

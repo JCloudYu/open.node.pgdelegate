@@ -57,6 +57,15 @@ var __rest = (this && this.__rest) || function (s, e) {
         }
     return t;
 };
+var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
+    if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
+        if (ar || !(i in from)) {
+            if (!ar) ar = Array.prototype.slice.call(from, 0, i);
+            ar[i] = from[i];
+        }
+    }
+    return to.concat(ar || Array.prototype.slice.call(from));
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 /**
  *	Author: cheny
@@ -82,7 +91,7 @@ var PGDelegate = /** @class */ (function () {
                         db_name = uri_path.substring(1, sep <= 0 ? uri_path.length : sep);
                         port = parseInt(uri_info.port || '5432');
                         instance = new PGDelegate();
-                        pool = new postgres.Pool(__assign({ user: uri_info.username, password: uri_info.password, host: uri_info.hostname, port: port, database: db_name }, conn_options));
+                        pool = new postgres.Pool(__assign({ user: decodeURIComponent(uri_info.username || ''), password: decodeURIComponent(uri_info.password || ''), host: uri_info.hostname, port: port, database: decodeURIComponent(db_name) }, conn_options));
                         __PGDelegate.set(instance, { pool: pool });
                         return [4 /*yield*/, pool.connect()];
                     case 1:
@@ -94,7 +103,8 @@ var PGDelegate = /** @class */ (function () {
         });
     };
     PGDelegate.format = function (text, values) {
-        return PGFormat(text, values);
+        if (values === void 0) { values = []; }
+        return PGFormat.apply(void 0, __spreadArray([text], values, false));
     };
     Object.defineProperty(PGDelegate.prototype, "is_connected", {
         get: function () {
