@@ -4,10 +4,28 @@
 **/
 import postgres = require("pg");
 import PGFormat = require('pg-format-fix');
-import type {QueryResultRow} from "pg";
-type QRR = QueryResultRow;
-
 import URI = require("./lib/uri.js");
+
+
+
+
+export interface ColumnInfo {
+	name: string;
+    tableID: number;
+    columnID: number;
+    dataTypeID: number;
+    dataTypeSize: number;
+    dataTypeModifier: number;
+    format: string;
+}
+export interface QueryResult<R> {
+	command: string;
+    rowCount: number;
+    oid: number;
+    fields: ColumnInfo[];
+	rows: R[];
+};
+export interface KVData {[column:string]:any};
 
 export type PostgresSessionInitOptions = { uri:string; } & Omit<postgres.PoolConfig, 'user'|'password'|'database'|'port'>;
 
@@ -62,17 +80,17 @@ class PGDelegate {
 	
 
 	
-	async query<R1 extends QRR=any, ValueType extends any[]=any>(text:string, values?:ValueType):Promise<postgres.QueryResult<R1>>;
-	async query<R1 extends QRR, R2  extends QRR, ValueType extends any[]=any>(text:string, values?:ValueType):Promise<[postgres.QueryResult<R1>, postgres.QueryResult<R2>]>;
-	async query<R1 extends QRR, R2 extends QRR, R3 extends QRR, ValueType extends any[]=any>(text:string, values?:ValueType):Promise<[postgres.QueryResult<R1>, postgres.QueryResult<R2>, postgres.QueryResult<R3>]>;
-	async query<R1 extends QRR, R2 extends QRR, R3 extends QRR, R4 extends QRR, ValueType extends any[]=any>(text:string, values?:ValueType):Promise<[postgres.QueryResult<R1>, postgres.QueryResult<R2>, postgres.QueryResult<R3>, postgres.QueryResult<R4>]>;
-	async query<R1 extends QRR, R2 extends QRR, R3 extends QRR, R4 extends QRR, R5 extends QRR, ValueType extends any[]=any>(text:string, values?:ValueType):Promise<[postgres.QueryResult<R1>, postgres.QueryResult<R2>, postgres.QueryResult<R3>, postgres.QueryResult<R4>, postgres.QueryResult<R5>]>;
-	async query<R1 extends QRR, R2 extends QRR, R3 extends QRR, R4 extends QRR, R5 extends QRR, R6 extends QRR, ValueType extends any[]=any>(text:string, values?:ValueType):Promise<[postgres.QueryResult<R1>, postgres.QueryResult<R2>, postgres.QueryResult<R3>, postgres.QueryResult<R4>, postgres.QueryResult<R5>, postgres.QueryResult<R6>]>;
-	async query<R1 extends QRR, R2 extends QRR, R3 extends QRR, R4 extends QRR, R5 extends QRR, R6 extends QRR, R7 extends QRR, ValueType extends any[]=any>(text:string, values?:ValueType):Promise<[postgres.QueryResult<R1>, postgres.QueryResult<R2>, postgres.QueryResult<R3>, postgres.QueryResult<R4>, postgres.QueryResult<R5>, postgres.QueryResult<R6>, postgres.QueryResult<R7>]>;
-	async query<R1 extends QRR, R2 extends QRR, R3 extends QRR, R4 extends QRR, R5 extends QRR, R6 extends QRR, R7 extends QRR, R8 extends QRR, ValueType extends any[]=any>(text:string, values?:ValueType):Promise<[postgres.QueryResult<R1>, postgres.QueryResult<R2>, postgres.QueryResult<R3>, postgres.QueryResult<R4>, postgres.QueryResult<R5>, postgres.QueryResult<R6>, postgres.QueryResult<R7>, postgres.QueryResult<R8>]>;
-	async query<R1 extends QRR, R2 extends QRR, R3 extends QRR, R4 extends QRR, R5 extends QRR, R6 extends QRR, R7 extends QRR, R8 extends QRR, R9 extends QRR, ValueType extends any[]=any>(text:string, values?:ValueType):Promise<[postgres.QueryResult<R1>, postgres.QueryResult<R2>, postgres.QueryResult<R3>, postgres.QueryResult<R4>, postgres.QueryResult<R5>, postgres.QueryResult<R6>, postgres.QueryResult<R7>, postgres.QueryResult<R8>, postgres.QueryResult<R9>]>;
-	async query<R1 extends QRR, R2 extends QRR, R3 extends QRR, R4 extends QRR, R5 extends QRR, R6 extends QRR, R7 extends QRR, R8 extends QRR, R9 extends QRR, R10 extends QRR, ValueType extends any[]=any>(text:string, values?:ValueType):Promise<[postgres.QueryResult<R1>, postgres.QueryResult<R2>, postgres.QueryResult<R3>, postgres.QueryResult<R4>, postgres.QueryResult<R5>, postgres.QueryResult<R6>, postgres.QueryResult<R7>, postgres.QueryResult<R8>, postgres.QueryResult<R9>, postgres.QueryResult<R10>]>;
-	async query<ValueType extends any[]=any>(text:string, values?:ValueType):Promise<postgres.QueryResult<any>|postgres.QueryResult<any>[]> {
+	async query<R1 extends KVData=any, ValueType extends any[]=any>(text:string, values?:ValueType):Promise<QueryResult<R1>>;
+	async query<R1 extends KVData, R2  extends KVData, ValueType extends any[]=any>(text:string, values?:ValueType):Promise<[QueryResult<R1>, QueryResult<R2>]>;
+	async query<R1 extends KVData, R2 extends KVData, R3 extends KVData, ValueType extends any[]=any>(text:string, values?:ValueType):Promise<[QueryResult<R1>, QueryResult<R2>, QueryResult<R3>]>;
+	async query<R1 extends KVData, R2 extends KVData, R3 extends KVData, R4 extends KVData, ValueType extends any[]=any>(text:string, values?:ValueType):Promise<[QueryResult<R1>, QueryResult<R2>, QueryResult<R3>, QueryResult<R4>]>;
+	async query<R1 extends KVData, R2 extends KVData, R3 extends KVData, R4 extends KVData, R5 extends KVData, ValueType extends any[]=any>(text:string, values?:ValueType):Promise<[QueryResult<R1>, QueryResult<R2>, QueryResult<R3>, QueryResult<R4>, QueryResult<R5>]>;
+	async query<R1 extends KVData, R2 extends KVData, R3 extends KVData, R4 extends KVData, R5 extends KVData, R6 extends KVData, ValueType extends any[]=any>(text:string, values?:ValueType):Promise<[QueryResult<R1>, QueryResult<R2>, QueryResult<R3>, QueryResult<R4>, QueryResult<R5>, QueryResult<R6>]>;
+	async query<R1 extends KVData, R2 extends KVData, R3 extends KVData, R4 extends KVData, R5 extends KVData, R6 extends KVData, R7 extends KVData, ValueType extends any[]=any>(text:string, values?:ValueType):Promise<[QueryResult<R1>, QueryResult<R2>, QueryResult<R3>, QueryResult<R4>, QueryResult<R5>, QueryResult<R6>, QueryResult<R7>]>;
+	async query<R1 extends KVData, R2 extends KVData, R3 extends KVData, R4 extends KVData, R5 extends KVData, R6 extends KVData, R7 extends KVData, R8 extends KVData, ValueType extends any[]=any>(text:string, values?:ValueType):Promise<[QueryResult<R1>, QueryResult<R2>, QueryResult<R3>, QueryResult<R4>, QueryResult<R5>, QueryResult<R6>, QueryResult<R7>, QueryResult<R8>]>;
+	async query<R1 extends KVData, R2 extends KVData, R3 extends KVData, R4 extends KVData, R5 extends KVData, R6 extends KVData, R7 extends KVData, R8 extends KVData, R9 extends KVData, ValueType extends any[]=any>(text:string, values?:ValueType):Promise<[QueryResult<R1>, QueryResult<R2>, QueryResult<R3>, QueryResult<R4>, QueryResult<R5>, QueryResult<R6>, QueryResult<R7>, QueryResult<R8>, QueryResult<R9>]>;
+	async query<R1 extends KVData, R2 extends KVData, R3 extends KVData, R4 extends KVData, R5 extends KVData, R6 extends KVData, R7 extends KVData, R8 extends KVData, R9 extends KVData, R10 extends KVData, ValueType extends any[]=any>(text:string, values?:ValueType):Promise<[QueryResult<R1>, QueryResult<R2>, QueryResult<R3>, QueryResult<R4>, QueryResult<R5>, QueryResult<R6>, QueryResult<R7>, QueryResult<R8>, QueryResult<R9>, QueryResult<R10>]>;
+	async query<ValueType extends any[]=any>(text:string, values?:ValueType):Promise<QueryResult<any>|QueryResult<any>[]> {
 		const pool = __PGDelegate.get(this)!.pool;
 		if ( !pool ) throw new Error("Postgres connection has been dropped!");
 

@@ -6,7 +6,7 @@
 		"resolveJsonModule": true,
 		"strictNullChecks": true,
 		"esModuleInterop": true,
-		"skipLibCheck": true,
+		"skipLibCheck": false,
 		"outDir": "./_dist",
 		"rootDir": "."
 	},
