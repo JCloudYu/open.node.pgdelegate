@@ -72,7 +72,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
  *	Create: 2021-08-10
 **/
 var postgres = require("pg");
-var PGFormat = require("pg-format");
+var PGFormat = require("pg-format-fix");
 var URI = require("./lib/uri.js");
 var __PGDelegate = new WeakMap();
 var PGDelegate = /** @class */ (function () {

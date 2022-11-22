@@ -18,7 +18,7 @@
 	"dependencies": {
 		"@types/pg-format": "^1.0.2",
 		"pg": "^8.7.3",
-		"pg-format": "^1.0.4"
+		"pg-format-fix": "^1.0.5"
 	},
 	"devDependencies": {
 		"@types/pg": "^8.6.5",
