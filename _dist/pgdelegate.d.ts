@@ -1,7 +1,9 @@
+/// <reference types="node" />
 /**
  *	Author: cheny
  *	Create: 2021-08-10
 **/
+import type TLS = require('tls');
 import postgres = require("pg");
 export interface ColumnInfo {
     name: string;
@@ -22,9 +24,15 @@ export interface QueryResult<R> {
 export interface KVData {
     [column: string]: any;
 }
+interface SSLOptions extends TLS.SecureContextOptions, TLS.CommonConnectionOptions {
+    ca_file?: string;
+    cert_file?: string;
+    key_file?: string;
+}
 export declare type PostgresSessionInitOptions = {
     uri: string;
-} & Omit<postgres.PoolConfig, 'user' | 'password' | 'database' | 'port'>;
+    ssl?: boolean | SSLOptions;
+} & Omit<postgres.PoolConfig, 'user' | 'password' | 'database' | 'port' | 'ssl'>;
 declare class PGDelegate {
     static init(conn_info: PostgresSessionInitOptions): Promise<PGDelegate>;
     static format(text: string, values?: any[]): string;

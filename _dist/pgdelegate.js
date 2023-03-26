@@ -67,20 +67,22 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
     return to.concat(ar || Array.prototype.slice.call(from));
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-/**
- *	Author: cheny
- *	Create: 2021-08-10
-**/
 var postgres = require("pg");
+var fs = require("fs");
+var path = require("path");
 var PGFormat = require("pg-format-fix");
 var URI = require("./lib/uri.js");
+;
+;
+;
+var BASE_DIR = process.cwd();
 var __PGDelegate = new WeakMap();
 var PGDelegate = /** @class */ (function () {
     function PGDelegate() {
     }
     PGDelegate.init = function (conn_info) {
         return __awaiter(this, void 0, void 0, function () {
-            var _1, _2, _3, _4, _5, conn_options, uri_info, uri_path, sep, db_name, port, instance, pool;
+            var _1, _2, _3, _4, _5, conn_options, uri_info, uri_path, sep, db_name, port, ssl_info, ca_path, cert_path, key_path, instance, pool;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -90,6 +92,24 @@ var PGDelegate = /** @class */ (function () {
                         sep = uri_path.indexOf('/', 1);
                         db_name = uri_path.substring(1, sep <= 0 ? uri_path.length : sep);
                         port = parseInt(uri_info.port || '5432');
+                        if (typeof conn_options.ssl !== "boolean" && Object(conn_options.ssl) === conn_options.ssl) {
+                            ssl_info = conn_options.ssl;
+                            if (typeof ssl_info.ca_file === "string") {
+                                ca_path = path.resolve(BASE_DIR, ssl_info.ca_file);
+                                ssl_info.ca = fs.readFileSync(ca_path).toString('utf8');
+                                ssl_info.ca_file = undefined;
+                            }
+                            if (typeof ssl_info.cert_file === "string") {
+                                cert_path = path.resolve(BASE_DIR, ssl_info.cert_file);
+                                ssl_info.cert = fs.readFileSync(cert_path).toString('utf8');
+                                ssl_info.cert_file = undefined;
+                            }
+                            if (typeof ssl_info.key_file === "string") {
+                                key_path = path.resolve(BASE_DIR, ssl_info.key_file);
+                                ssl_info.key = fs.readFileSync(key_path).toString('utf8');
+                                ssl_info.key_file = undefined;
+                            }
+                        }
                         instance = new PGDelegate();
                         pool = new postgres.Pool(__assign({ user: decodeURIComponent(uri_info.username || ''), password: decodeURIComponent(uri_info.password || ''), host: uri_info.hostname, port: port, database: decodeURIComponent(db_name) }, conn_options));
                         __PGDelegate.set(instance, { pool: pool });

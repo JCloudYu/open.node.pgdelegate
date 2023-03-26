@@ -2,7 +2,10 @@
  *	Author: cheny
  *	Create: 2021-08-10
 **/
+import type TLS = require('tls');
 import postgres = require("pg");
+import fs = require('fs');
+import path = require('path');
 import PGFormat = require('pg-format-fix');
 import URI = require("./lib/uri.js");
 
@@ -27,9 +30,12 @@ export interface QueryResult<R> {
 };
 export interface KVData {[column:string]:any};
 
-export type PostgresSessionInitOptions = { uri:string; } & Omit<postgres.PoolConfig, 'user'|'password'|'database'|'port'>;
+interface SSLOptions extends TLS.SecureContextOptions, TLS.CommonConnectionOptions {ca_file?:string; cert_file?:string; key_file?:string};
+export type PostgresSessionInitOptions = {uri:string; ssl?:boolean|SSLOptions} & Omit<postgres.PoolConfig, 'user'|'password'|'database'|'port'|'ssl'>;
 
 
+
+const BASE_DIR = process.cwd();
 type PGDelegatePrivates = { pool:postgres.Pool|null; };
 const __PGDelegate:WeakMap<PGDelegate, PGDelegatePrivates> = new WeakMap();
 class PGDelegate {
@@ -44,6 +50,28 @@ class PGDelegate {
 		let sep = uri_path.indexOf('/', 1);
         const db_name = uri_path.substring(1, sep<=0?uri_path.length:sep);
 		const port = parseInt(uri_info.port||'5432');
+
+
+		if ( typeof conn_options.ssl !== "boolean" && Object(conn_options.ssl) === conn_options.ssl ) {
+			const ssl_info = conn_options.ssl!;
+			if ( typeof ssl_info.ca_file === "string" ) {
+				const ca_path = path.resolve(BASE_DIR, ssl_info.ca_file);
+				ssl_info.ca = fs.readFileSync(ca_path).toString('utf8');
+				ssl_info.ca_file = undefined;
+			}
+
+			if ( typeof ssl_info.cert_file === "string" ) {
+				const cert_path = path.resolve(BASE_DIR, ssl_info.cert_file);
+				ssl_info.cert = fs.readFileSync(cert_path).toString('utf8');
+				ssl_info.cert_file = undefined;
+			}
+
+			if ( typeof ssl_info.key_file === "string" ) {
+				const key_path = path.resolve(BASE_DIR, ssl_info.key_file);
+				ssl_info.key = fs.readFileSync(key_path).toString('utf8');
+				ssl_info.key_file = undefined;
+			}
+		}
 
 
 
