@@ -93,8 +93,18 @@ class PGDelegate {
 		return instance;
 	}
 
-	static format(text:string, values:any[]=[]):string {
-		return PGFormat(text, ...values)
+	static format(text:string, values:({[key:string]:any}|any[])={}):string {
+		if ( Array.isArray(values) ) {
+			return PGFormat(text, ...values)
+		}
+		else 
+		if ( Object(values) === values ) {
+			const result = ParseVarMap(text, values);
+			return PGFormat(result.sql, result.values);
+		}
+		else {
+			throw new TypeError("Given values must be an object or an array!");
+		}
 	}
 
 	get is_connected():boolean {
@@ -137,6 +147,32 @@ class PGDelegate {
 		.finally(()=>inst_client.release());
 	}
 
+	async exec<R1 extends KVData=any, ValueType extends {[key:string]:any}={}>(text:string, values?:ValueType):Promise<QueryResult<R1>>;
+	async exec<R1 extends KVData, R2  extends KVData, ValueType extends {[key:string]:any}={}>(text:string, values?:ValueType):Promise<[QueryResult<R1>, QueryResult<R2>]>;
+	async exec<R1 extends KVData, R2 extends KVData, R3 extends KVData, ValueType extends {[key:string]:any}={}>(text:string, values?:ValueType):Promise<[QueryResult<R1>, QueryResult<R2>, QueryResult<R3>]>;
+	async exec<R1 extends KVData, R2 extends KVData, R3 extends KVData, R4 extends KVData, ValueType extends {[key:string]:any}={}>(text:string, values?:ValueType):Promise<[QueryResult<R1>, QueryResult<R2>, QueryResult<R3>, QueryResult<R4>]>;
+	async exec<R1 extends KVData, R2 extends KVData, R3 extends KVData, R4 extends KVData, R5 extends KVData, ValueType extends {[key:string]:any}={}>(text:string, values?:ValueType):Promise<[QueryResult<R1>, QueryResult<R2>, QueryResult<R3>, QueryResult<R4>, QueryResult<R5>]>;
+	async exec<R1 extends KVData, R2 extends KVData, R3 extends KVData, R4 extends KVData, R5 extends KVData, R6 extends KVData, ValueType extends {[key:string]:any}={}>(text:string, values?:ValueType):Promise<[QueryResult<R1>, QueryResult<R2>, QueryResult<R3>, QueryResult<R4>, QueryResult<R5>, QueryResult<R6>]>;
+	async exec<R1 extends KVData, R2 extends KVData, R3 extends KVData, R4 extends KVData, R5 extends KVData, R6 extends KVData, R7 extends KVData, ValueType extends {[key:string]:any}={}>(text:string, values?:ValueType):Promise<[QueryResult<R1>, QueryResult<R2>, QueryResult<R3>, QueryResult<R4>, QueryResult<R5>, QueryResult<R6>, QueryResult<R7>]>;
+	async exec<R1 extends KVData, R2 extends KVData, R3 extends KVData, R4 extends KVData, R5 extends KVData, R6 extends KVData, R7 extends KVData, R8 extends KVData, ValueType extends {[key:string]:any}={}>(text:string, values?:ValueType):Promise<[QueryResult<R1>, QueryResult<R2>, QueryResult<R3>, QueryResult<R4>, QueryResult<R5>, QueryResult<R6>, QueryResult<R7>, QueryResult<R8>]>;
+	async exec<R1 extends KVData, R2 extends KVData, R3 extends KVData, R4 extends KVData, R5 extends KVData, R6 extends KVData, R7 extends KVData, R8 extends KVData, R9 extends KVData, ValueType extends {[key:string]:any}={}>(text:string, values?:ValueType):Promise<[QueryResult<R1>, QueryResult<R2>, QueryResult<R3>, QueryResult<R4>, QueryResult<R5>, QueryResult<R6>, QueryResult<R7>, QueryResult<R8>, QueryResult<R9>]>;
+	async exec<R1 extends KVData, R2 extends KVData, R3 extends KVData, R4 extends KVData, R5 extends KVData, R6 extends KVData, R7 extends KVData, R8 extends KVData, R9 extends KVData, R10 extends KVData, ValueType extends {[key:string]:any}={}>(text:string, values?:ValueType):Promise<[QueryResult<R1>, QueryResult<R2>, QueryResult<R3>, QueryResult<R4>, QueryResult<R5>, QueryResult<R6>, QueryResult<R7>, QueryResult<R8>, QueryResult<R9>, QueryResult<R10>]>;
+	async exec<ValueType extends any[]=any>(text:string, values?:ValueType):Promise<QueryResult<any>|QueryResult<any>[]> {
+		const pool = __PGDelegate.get(this)!.pool;
+		if ( !pool ) throw new Error("Postgres connection has been dropped!");
+
+
+
+		const inst_client = await pool.connect();
+		return await Promise.resolve()
+		.then(async()=>{
+			const result = ParseVarMap(text, values||{});
+			const final_sql = PGFormat(result.sql, result.values);
+			return await inst_client.query(final_sql);
+		})
+		.finally(()=>inst_client.release());
+	}
+
 	/*
 	async transaction(handler:ScopeHandler<postgres.PoolClient>):Promise<void> {
 		const pool = __PGDelegate.get(this)!.pool;
@@ -162,3 +198,93 @@ class PGDelegate {
 };
 
 export default PGDelegate;
+
+
+
+
+function ParseVarMap(sql:string, data:{[key:string]:any}) {
+	let i=0, parsed = '', values:any[] = [];
+	while(i<sql.length) {
+		switch(sql[i]) {
+			case "\\": {
+				const {idx, parts} = EatEscape(sql, i);
+				i = idx;
+				parsed += parts;
+				break;
+			}
+
+			case "{": {
+				const {idx, key} = EatValue(sql, i);
+				const value = data[key];
+				if ( value === undefined ) {
+					throw new RangeError(`Unable to locate key "${key}" in data map!`);
+				}
+
+				values.push(value);
+				i = idx;
+				parsed += ((value instanceof BigInt)||(typeof value === "bigint")) ? '%s' : '%L';
+				break;
+			}
+
+			case "[": {
+				const {idx, key} = EatColumn(sql, i);
+				if ( data[key] === undefined ) {
+					throw new RangeError(`Unable to locate key "${key}" in data map!`);
+				}
+
+				values.push(data[key]);
+				i = idx;
+				parsed += '%I';
+				break;
+			}
+
+			default: {
+				parsed += sql[i++];
+				break;
+			}
+		}
+	}
+
+	return {sql:parsed, values};
+}
+function EatEscape(sql:string, idx:number):{parts:string; idx:number} {
+	let str = sql.substring(idx, idx+2);
+	switch(str) {
+		case "\\\\":
+			str = "\\";
+			break;
+
+		case "\\{":
+			str = "{";
+			break;
+		
+		default:
+			break;
+	}
+
+	return {parts:str, idx:idx+str.length};
+}
+function EatValue(sql:string, idx:number):{key:string; idx:number} {
+	let to = idx;
+	while(to < sql.length) {
+		if ( sql[to] === "}" ) break;
+		to++;
+	}
+
+	if ( to === idx+1 ) throw new SyntaxError(`Missing key name near offset ${idx}!`);
+	if ( to === sql.length ) throw new SyntaxError(`Missing closing operator '}' near offset ${idx}!`);
+	
+	return {idx:to+1, key:sql.substring(idx+1, to)};
+}
+function EatColumn(sql:string, idx:number):{key:string; idx:number} {
+	let to = idx;
+	while(to < sql.length) {
+		if ( sql[to] === "]" ) break;
+		to++;
+	}
+
+	if ( to === idx+1 ) throw new SyntaxError(`Missing key name near offset ${idx}!`);
+	if ( to === sql.length ) throw new SyntaxError(`Missing closing operator ']' near offset ${idx}!`);
+	
+	return {idx:to+1, key:sql.substring(idx+1, to)};
+}

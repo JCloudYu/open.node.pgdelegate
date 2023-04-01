@@ -123,8 +123,17 @@ var PGDelegate = /** @class */ (function () {
         });
     };
     PGDelegate.format = function (text, values) {
-        if (values === void 0) { values = []; }
-        return PGFormat.apply(void 0, __spreadArray([text], values, false));
+        if (values === void 0) { values = {}; }
+        if (Array.isArray(values)) {
+            return PGFormat.apply(void 0, __spreadArray([text], values, false));
+        }
+        else if (Object(values) === values) {
+            var result = ParseVarMap(text, values);
+            return PGFormat(result.sql, result.values);
+        }
+        else {
+            throw new TypeError("Given values must be an object or an array!");
+        }
     };
     Object.defineProperty(PGDelegate.prototype, "is_connected", {
         get: function () {
@@ -177,7 +186,118 @@ var PGDelegate = /** @class */ (function () {
             });
         });
     };
+    PGDelegate.prototype.exec = function (text, values) {
+        return __awaiter(this, void 0, void 0, function () {
+            var pool, inst_client;
+            var _this = this;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        pool = __PGDelegate.get(this).pool;
+                        if (!pool)
+                            throw new Error("Postgres connection has been dropped!");
+                        return [4 /*yield*/, pool.connect()];
+                    case 1:
+                        inst_client = _a.sent();
+                        return [4 /*yield*/, Promise.resolve()
+                                .then(function () { return __awaiter(_this, void 0, void 0, function () {
+                                var result, final_sql;
+                                return __generator(this, function (_a) {
+                                    switch (_a.label) {
+                                        case 0:
+                                            result = ParseVarMap(text, values || {});
+                                            final_sql = PGFormat(result.sql, result.values);
+                                            return [4 /*yield*/, inst_client.query(final_sql)];
+                                        case 1: return [2 /*return*/, _a.sent()];
+                                    }
+                                });
+                            }); })
+                                .finally(function () { return inst_client.release(); })];
+                    case 2: return [2 /*return*/, _a.sent()];
+                }
+            });
+        });
+    };
     return PGDelegate;
 }());
 ;
 exports.default = PGDelegate;
+function ParseVarMap(sql, data) {
+    var i = 0, parsed = '', values = [];
+    while (i < sql.length) {
+        switch (sql[i]) {
+            case "\\": {
+                var _a = EatEscape(sql, i), idx = _a.idx, parts = _a.parts;
+                i = idx;
+                parsed += parts;
+                break;
+            }
+            case "{": {
+                var _b = EatValue(sql, i), idx = _b.idx, key = _b.key;
+                var value = data[key];
+                if (value === undefined) {
+                    throw new RangeError("Unable to locate key \"".concat(key, "\" in data map!"));
+                }
+                values.push(value);
+                i = idx;
+                parsed += ((value instanceof BigInt) || (typeof value === "bigint")) ? '%s' : '%L';
+                break;
+            }
+            case "[": {
+                var _c = EatColumn(sql, i), idx = _c.idx, key = _c.key;
+                if (data[key] === undefined) {
+                    throw new RangeError("Unable to locate key \"".concat(key, "\" in data map!"));
+                }
+                values.push(data[key]);
+                i = idx;
+                parsed += '%I';
+                break;
+            }
+            default: {
+                parsed += sql[i++];
+                break;
+            }
+        }
+    }
+    return { sql: parsed, values: values };
+}
+function EatEscape(sql, idx) {
+    var str = sql.substring(idx, idx + 2);
+    switch (str) {
+        case "\\\\":
+            str = "\\";
+            break;
+        case "\\{":
+            str = "{";
+            break;
+        default:
+            break;
+    }
+    return { parts: str, idx: idx + str.length };
+}
+function EatValue(sql, idx) {
+    var to = idx;
+    while (to < sql.length) {
+        if (sql[to] === "}")
+            break;
+        to++;
+    }
+    if (to === idx + 1)
+        throw new SyntaxError("Missing key name near offset ".concat(idx, "!"));
+    if (to === sql.length)
+        throw new SyntaxError("Missing closing operator '}' near offset ".concat(idx, "!"));
+    return { idx: to + 1, key: sql.substring(idx + 1, to) };
+}
+function EatColumn(sql, idx) {
+    var to = idx;
+    while (to < sql.length) {
+        if (sql[to] === "]")
+            break;
+        to++;
+    }
+    if (to === idx + 1)
+        throw new SyntaxError("Missing key name near offset ".concat(idx, "!"));
+    if (to === sql.length)
+        throw new SyntaxError("Missing closing operator ']' near offset ".concat(idx, "!"));
+    return { idx: to + 1, key: sql.substring(idx + 1, to) };
+}
