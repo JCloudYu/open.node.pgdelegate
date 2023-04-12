@@ -197,7 +197,7 @@ class PGDelegate {
 	*/
 };
 
-export default PGDelegate;
+export {PGDelegate};
 
 
 

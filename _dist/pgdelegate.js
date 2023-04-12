@@ -67,6 +67,7 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
     return to.concat(ar || Array.prototype.slice.call(from));
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.PGDelegate = void 0;
 var postgres = require("pg");
 var fs = require("fs");
 var path = require("path");
@@ -220,8 +221,8 @@ var PGDelegate = /** @class */ (function () {
     };
     return PGDelegate;
 }());
+exports.PGDelegate = PGDelegate;
 ;
-exports.default = PGDelegate;
 function ParseVarMap(sql, data) {
     var i = 0, parsed = '', values = [];
     while (i < sql.length) {
