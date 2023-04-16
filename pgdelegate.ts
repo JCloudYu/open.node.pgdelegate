@@ -167,7 +167,7 @@ class PGDelegate {
 		return await Promise.resolve()
 		.then(async()=>{
 			const result = ParseVarMap(text, values||{});
-			const final_sql = PGFormat(result.sql, result.values);
+			const final_sql = PGFormat(result.sql, ...result.values);
 			return await inst_client.query(final_sql);
 		})
 		.finally(()=>inst_client.release());

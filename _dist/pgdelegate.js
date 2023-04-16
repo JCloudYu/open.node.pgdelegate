@@ -207,7 +207,7 @@ var PGDelegate = /** @class */ (function () {
                                     switch (_a.label) {
                                         case 0:
                                             result = ParseVarMap(text, values || {});
-                                            final_sql = PGFormat(result.sql, result.values);
+                                            final_sql = PGFormat.apply(void 0, __spreadArray([result.sql], result.values, false));
                                             return [4 /*yield*/, inst_client.query(final_sql)];
                                         case 1: return [2 /*return*/, _a.sent()];
                                     }
