@@ -1,6 +1,6 @@
 {
 	"name": "pgdelegate",
-	"version": "0.5.1",
+	"version": "0.6.0",
 	"description": "A library provides easy use of PostgresSQL library",
 	"main": "_dist/pgdelegate.js",
 	"scripts": {

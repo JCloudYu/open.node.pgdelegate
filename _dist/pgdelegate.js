@@ -130,7 +130,7 @@ var PGDelegate = /** @class */ (function () {
         }
         else if (Object(values) === values) {
             var result = ParseVarMap(text, values);
-            return PGFormat(result.sql, result.values);
+            return PGFormat.apply(void 0, __spreadArray([result.sql], result.values, false));
         }
         else {
             throw new TypeError("Given values must be an object or an array!");

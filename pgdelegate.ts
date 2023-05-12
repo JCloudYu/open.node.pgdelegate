@@ -100,7 +100,7 @@ class PGDelegate {
 		else 
 		if ( Object(values) === values ) {
 			const result = ParseVarMap(text, values);
-			return PGFormat(result.sql, result.values);
+			return PGFormat(result.sql, ...result.values);
 		}
 		else {
 			throw new TypeError("Given values must be an object or an array!");
