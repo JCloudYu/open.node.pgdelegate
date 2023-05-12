@@ -103,7 +103,7 @@ class PGDelegate {
 			return PGFormat(result.sql, ...result.values);
 		}
 		else {
-			throw new TypeError("Given values must be an object or an array!");
+			throw Object.assign(new TypeError("Given values must be an object or an array!"), {text, values});
 		}
 	}
 
@@ -217,7 +217,9 @@ function ParseVarMap(sql:string, data:{[key:string]:any}) {
 				const {idx, key} = EatValue(sql, i);
 				const value = data[key];
 				if ( value === undefined ) {
-					throw new RangeError(`Unable to locate key "${key}" in data map!`);
+					throw Object.assign(new RangeError(`Unable to locate value key "${key}" in data map!`), {
+						sql, data
+					});
 				}
 
 				values.push(value);
@@ -229,7 +231,9 @@ function ParseVarMap(sql:string, data:{[key:string]:any}) {
 			case "[": {
 				const {idx, key} = EatColumn(sql, i);
 				if ( data[key] === undefined ) {
-					throw new RangeError(`Unable to locate key "${key}" in data map!`);
+					throw Object.assign(new RangeError(`Unable to locate column key "${key}" in data map!`), {
+						sql, data
+					});
 				}
 
 				values.push(data[key]);
@@ -271,8 +275,8 @@ function EatValue(sql:string, idx:number):{key:string; idx:number} {
 		to++;
 	}
 
-	if ( to === idx+1 ) throw new SyntaxError(`Missing key name near offset ${idx}!`);
-	if ( to === sql.length ) throw new SyntaxError(`Missing closing operator '}' near offset ${idx}!`);
+	if ( to === idx+1 ) throw Object.assign(new SyntaxError(`Missing key name near offset ${idx}!`), {sql});
+	if ( to === sql.length ) throw Object.assign(new SyntaxError(`Missing closing operator '}' near offset ${idx}!`), {sql});
 	
 	return {idx:to+1, key:sql.substring(idx+1, to)};
 }
@@ -283,8 +287,8 @@ function EatColumn(sql:string, idx:number):{key:string; idx:number} {
 		to++;
 	}
 
-	if ( to === idx+1 ) throw new SyntaxError(`Missing key name near offset ${idx}!`);
-	if ( to === sql.length ) throw new SyntaxError(`Missing closing operator ']' near offset ${idx}!`);
+	if ( to === idx+1 ) throw Object.assign(new SyntaxError(`Missing key name near offset ${idx}!`), {sql});
+	if ( to === sql.length ) throw Object.assign(new SyntaxError(`Missing closing operator ']' near offset ${idx}!`));
 	
 	return {idx:to+1, key:sql.substring(idx+1, to)};
 }

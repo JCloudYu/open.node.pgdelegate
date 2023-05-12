@@ -133,7 +133,7 @@ var PGDelegate = /** @class */ (function () {
             return PGFormat.apply(void 0, __spreadArray([result.sql], result.values, false));
         }
         else {
-            throw new TypeError("Given values must be an object or an array!");
+            throw Object.assign(new TypeError("Given values must be an object or an array!"), { text: text, values: values });
         }
     };
     Object.defineProperty(PGDelegate.prototype, "is_connected", {
@@ -237,7 +237,10 @@ function ParseVarMap(sql, data) {
                 var _b = EatValue(sql, i), idx = _b.idx, key = _b.key;
                 var value = data[key];
                 if (value === undefined) {
-                    throw new RangeError("Unable to locate key \"".concat(key, "\" in data map!"));
+                    throw Object.assign(new RangeError("Unable to locate value key \"".concat(key, "\" in data map!")), {
+                        sql: sql,
+                        data: data
+                    });
                 }
                 values.push(value);
                 i = idx;
@@ -247,7 +250,10 @@ function ParseVarMap(sql, data) {
             case "[": {
                 var _c = EatColumn(sql, i), idx = _c.idx, key = _c.key;
                 if (data[key] === undefined) {
-                    throw new RangeError("Unable to locate key \"".concat(key, "\" in data map!"));
+                    throw Object.assign(new RangeError("Unable to locate column key \"".concat(key, "\" in data map!")), {
+                        sql: sql,
+                        data: data
+                    });
                 }
                 values.push(data[key]);
                 i = idx;
@@ -284,9 +290,9 @@ function EatValue(sql, idx) {
         to++;
     }
     if (to === idx + 1)
-        throw new SyntaxError("Missing key name near offset ".concat(idx, "!"));
+        throw Object.assign(new SyntaxError("Missing key name near offset ".concat(idx, "!")), { sql: sql });
     if (to === sql.length)
-        throw new SyntaxError("Missing closing operator '}' near offset ".concat(idx, "!"));
+        throw Object.assign(new SyntaxError("Missing closing operator '}' near offset ".concat(idx, "!")), { sql: sql });
     return { idx: to + 1, key: sql.substring(idx + 1, to) };
 }
 function EatColumn(sql, idx) {
@@ -297,8 +303,8 @@ function EatColumn(sql, idx) {
         to++;
     }
     if (to === idx + 1)
-        throw new SyntaxError("Missing key name near offset ".concat(idx, "!"));
+        throw Object.assign(new SyntaxError("Missing key name near offset ".concat(idx, "!")), { sql: sql });
     if (to === sql.length)
-        throw new SyntaxError("Missing closing operator ']' near offset ".concat(idx, "!"));
+        throw Object.assign(new SyntaxError("Missing closing operator ']' near offset ".concat(idx, "!")));
     return { idx: to + 1, key: sql.substring(idx + 1, to) };
 }
