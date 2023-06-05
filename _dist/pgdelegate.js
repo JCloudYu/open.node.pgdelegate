@@ -206,10 +206,13 @@ var PGDelegate = /** @class */ (function () {
                                 return __generator(this, function (_a) {
                                     switch (_a.label) {
                                         case 0:
+                                            if (!(values === undefined)) return [3 /*break*/, 2];
                                             result = ParseVarMap(text, values || {});
                                             final_sql = PGFormat.apply(void 0, __spreadArray([result.sql], result.values, false));
                                             return [4 /*yield*/, inst_client.query(final_sql)];
                                         case 1: return [2 /*return*/, _a.sent()];
+                                        case 2: return [4 /*yield*/, inst_client.query(text)];
+                                        case 3: return [2 /*return*/, _a.sent()];
                                     }
                                 });
                             }); })

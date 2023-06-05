@@ -166,9 +166,14 @@ class PGDelegate {
 		const inst_client = await pool.connect();
 		return await Promise.resolve()
 		.then(async()=>{
-			const result = ParseVarMap(text, values||{});
-			const final_sql = PGFormat(result.sql, ...result.values);
-			return await inst_client.query(final_sql);
+			if ( values === undefined ) {
+				const result = ParseVarMap(text, values||{});
+				const final_sql = PGFormat(result.sql, ...result.values);
+				return await inst_client.query(final_sql);
+			}
+			else {
+				return await inst_client.query(text);
+			}
 		})
 		.finally(()=>inst_client.release());
 	}
