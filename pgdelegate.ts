@@ -144,6 +144,11 @@ class PGDelegate {
 				return await inst_client.query(text);
 			}
 		})
+		.catch((e:Error&{sql?:string, values?:any})=>{
+			e.sql = text;
+			e.values = values;
+			return Promise.reject(e);
+		})
 		.finally(()=>inst_client.release());
 	}
 
@@ -166,7 +171,7 @@ class PGDelegate {
 		const inst_client = await pool.connect();
 		return await Promise.resolve()
 		.then(async()=>{
-			if ( values === undefined ) {
+			if ( values !== undefined ) {
 				const result = ParseVarMap(text, values||{});
 				const final_sql = PGFormat(result.sql, ...result.values);
 				return await inst_client.query(final_sql);
@@ -174,6 +179,11 @@ class PGDelegate {
 			else {
 				return await inst_client.query(text);
 			}
+		})
+		.catch((e:Error&{sql?:string, values?:any})=>{
+			e.sql = text;
+			e.values = values;
+			return Promise.reject(e);
 		})
 		.finally(()=>inst_client.release());
 	}

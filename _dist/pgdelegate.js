@@ -181,6 +181,11 @@ var PGDelegate = /** @class */ (function () {
                                     }
                                 });
                             }); })
+                                .catch(function (e) {
+                                e.sql = text;
+                                e.values = values;
+                                return Promise.reject(e);
+                            })
                                 .finally(function () { return inst_client.release(); })];
                     case 2: return [2 /*return*/, _a.sent()];
                 }
@@ -206,7 +211,7 @@ var PGDelegate = /** @class */ (function () {
                                 return __generator(this, function (_a) {
                                     switch (_a.label) {
                                         case 0:
-                                            if (!(values === undefined)) return [3 /*break*/, 2];
+                                            if (!(values !== undefined)) return [3 /*break*/, 2];
                                             result = ParseVarMap(text, values || {});
                                             final_sql = PGFormat.apply(void 0, __spreadArray([result.sql], result.values, false));
                                             return [4 /*yield*/, inst_client.query(final_sql)];
@@ -216,6 +221,11 @@ var PGDelegate = /** @class */ (function () {
                                     }
                                 });
                             }); })
+                                .catch(function (e) {
+                                e.sql = text;
+                                e.values = values;
+                                return Promise.reject(e);
+                            })
                                 .finally(function () { return inst_client.release(); })];
                     case 2: return [2 /*return*/, _a.sent()];
                 }
