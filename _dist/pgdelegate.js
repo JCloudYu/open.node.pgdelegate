@@ -20,12 +20,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 var __generator = (this && this.__generator) || function (thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g = Object.create((typeof Iterator === "function" ? Iterator : Object).prototype);
+    return g.next = verb(0), g["throw"] = verb(1), g["return"] = verb(2), typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
-        while (_) try {
+        while (g && (g = 0, op[0] && (_ = 0)), _) try {
             if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
             if (y = 0, t) op = [op[0] & 2, t.value];
             switch (op[0]) {
@@ -67,7 +67,7 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
     return to.concat(ar || Array.prototype.slice.call(from));
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.PGDelegate = void 0;
+exports.PGTypes = exports.PGDelegate = void 0;
 var postgres = require("pg");
 var fs = require("fs");
 var path = require("path");
@@ -78,12 +78,30 @@ var URI = require("./lib/uri.js");
 ;
 var BASE_DIR = process.cwd();
 var __PGDelegate = new WeakMap();
+var ____DEFAULT_SERIALIZER = function (value) { return value; };
+var ____serializer = ____DEFAULT_SERIALIZER;
 var PGDelegate = /** @class */ (function () {
     function PGDelegate() {
     }
+    PGDelegate.setTypeParser = function (oid, parser) {
+        postgres.types.setTypeParser(oid, parser);
+        return this;
+    };
+    PGDelegate.getTypeParser = function (oid) {
+        var result = postgres.types.getTypeParser(oid);
+        return result;
+    };
+    PGDelegate.setTypeSerializer = function (serializer) {
+        if (typeof serializer !== "function")
+            return;
+        ____serializer = serializer;
+    };
+    PGDelegate.getTypeSerializer = function () {
+        return ____serializer;
+    };
     PGDelegate.init = function (conn_info) {
         return __awaiter(this, void 0, void 0, function () {
-            var _1, _2, _3, _4, _5, conn_options, uri_info, uri_path, sep, db_name, port, ssl_info, ca_path, cert_path, key_path, instance, pool;
+            var _1, _2, _3, _4, _5, conn_options, uri_info, uri_path, sep, db_name, port, search_params, ssl_mode, ssl_info, ca_path, cert_path, key_path, instance, pool;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -93,22 +111,49 @@ var PGDelegate = /** @class */ (function () {
                         sep = uri_path.indexOf('/', 1);
                         db_name = uri_path.substring(1, sep <= 0 ? uri_path.length : sep);
                         port = parseInt(uri_info.port || '5432');
-                        if (typeof conn_options.ssl !== "boolean" && Object(conn_options.ssl) === conn_options.ssl) {
+                        search_params = new URLSearchParams(uri_info.search || '');
+                        ssl_mode = search_params.get('sslmode');
+                        if (!ssl_mode || ssl_mode === 'disable') {
+                            delete conn_options.ssl;
+                        }
+                        else {
                             ssl_info = conn_options.ssl;
-                            if (typeof ssl_info.ca_file === "string") {
-                                ca_path = path.resolve(BASE_DIR, ssl_info.ca_file);
-                                ssl_info.ca = fs.readFileSync(ca_path).toString('utf8');
-                                ssl_info.ca_file = undefined;
+                            if (ssl_info === undefined || typeof ssl_info === "boolean") {
+                                ssl_info = {};
                             }
-                            if (typeof ssl_info.cert_file === "string") {
-                                cert_path = path.resolve(BASE_DIR, ssl_info.cert_file);
-                                ssl_info.cert = fs.readFileSync(cert_path).toString('utf8');
-                                ssl_info.cert_file = undefined;
+                            else {
+                                if (typeof ssl_info.ca_file === "string") {
+                                    ca_path = path.resolve(BASE_DIR, ssl_info.ca_file);
+                                    ssl_info.ca = fs.readFileSync(ca_path).toString('utf8');
+                                    ssl_info.ca_file = undefined;
+                                }
+                                if (typeof ssl_info.cert_file === "string") {
+                                    cert_path = path.resolve(BASE_DIR, ssl_info.cert_file);
+                                    ssl_info.cert = fs.readFileSync(cert_path).toString('utf8');
+                                    ssl_info.cert_file = undefined;
+                                }
+                                if (typeof ssl_info.key_file === "string") {
+                                    key_path = path.resolve(BASE_DIR, ssl_info.key_file);
+                                    ssl_info.key = fs.readFileSync(key_path).toString('utf8');
+                                    ssl_info.key_file = undefined;
+                                }
                             }
-                            if (typeof ssl_info.key_file === "string") {
-                                key_path = path.resolve(BASE_DIR, ssl_info.key_file);
-                                ssl_info.key = fs.readFileSync(key_path).toString('utf8');
-                                ssl_info.key_file = undefined;
+                            switch (ssl_mode) {
+                                case 'allow':
+                                case 'prefer':
+                                case 'require':
+                                    conn_options.ssl = Object.assign({
+                                        rejectUnauthorized: false
+                                    }, ssl_info);
+                                    break;
+                                case 'verify-ca':
+                                case 'verify-full':
+                                    conn_options.ssl = Object.assign({
+                                        rejectUnauthorized: true
+                                    }, ssl_info);
+                                    break;
+                                default:
+                                    throw new RangeError("Invalid SSL mode: ".concat(ssl_mode));
                             }
                         }
                         instance = new PGDelegate();
@@ -170,12 +215,16 @@ var PGDelegate = /** @class */ (function () {
                         inst_client = _a.sent();
                         return [4 /*yield*/, Promise.resolve()
                                 .then(function () { return __awaiter(_this, void 0, void 0, function () {
+                                var incomint_values;
                                 return __generator(this, function (_a) {
                                     switch (_a.label) {
                                         case 0:
                                             if (!(values !== undefined)) return [3 /*break*/, 2];
-                                            return [4 /*yield*/, inst_client.query(text, values)];
-                                        case 1: return [2 /*return*/, _a.sent()];
+                                            incomint_values = values.map(____serializer);
+                                            return [4 /*yield*/, inst_client.query(text, incomint_values)];
+                                        case 1: 
+                                        // @ts-ignore
+                                        return [2 /*return*/, _a.sent()];
                                         case 2: return [4 /*yield*/, inst_client.query(text)];
                                         case 3: return [2 /*return*/, _a.sent()];
                                     }
@@ -207,13 +256,14 @@ var PGDelegate = /** @class */ (function () {
                         inst_client = _a.sent();
                         return [4 /*yield*/, Promise.resolve()
                                 .then(function () { return __awaiter(_this, void 0, void 0, function () {
-                                var result, final_sql;
+                                var result, incomint_values, final_sql;
                                 return __generator(this, function (_a) {
                                     switch (_a.label) {
                                         case 0:
                                             if (!(values !== undefined)) return [3 /*break*/, 2];
                                             result = ParseVarMap(text, values || {});
-                                            final_sql = PGFormat.apply(void 0, __spreadArray([result.sql], result.values, false));
+                                            incomint_values = result.values.map(____serializer);
+                                            final_sql = PGFormat.apply(void 0, __spreadArray([result.sql], incomint_values, false));
                                             return [4 /*yield*/, inst_client.query(final_sql)];
                                         case 1: return [2 /*return*/, _a.sent()];
                                         case 2: return [4 /*yield*/, inst_client.query(text)];
@@ -236,6 +286,9 @@ var PGDelegate = /** @class */ (function () {
 }());
 exports.PGDelegate = PGDelegate;
 ;
+var PGTypes = postgres.types.builtins;
+exports.PGTypes = PGTypes;
+exports.default = PGDelegate;
 function ParseVarMap(sql, data) {
     var i = 0, parsed = '', values = [];
     while (i < sql.length) {

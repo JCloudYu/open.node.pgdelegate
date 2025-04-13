@@ -36,9 +36,31 @@ export type PostgresSessionInitOptions = {uri:string; ssl?:boolean|SSLOptions} &
 
 
 const BASE_DIR = process.cwd();
-type PGDelegatePrivates = { pool:postgres.Pool|null; };
+type PGDelegatePrivates = { pool:postgres.Pool|null;};
 const __PGDelegate:WeakMap<PGDelegate, PGDelegatePrivates> = new WeakMap();
+const ____DEFAULT_SERIALIZER = (value:any)=>value;
+let ____serializer = ____DEFAULT_SERIALIZER;
 class PGDelegate {
+	static setTypeParser(oid:number, parser:(value:string|null)=>any) {
+		postgres.types.setTypeParser(oid, parser);
+		return this;
+	}
+
+	static getTypeParser(oid:number):any {
+		const result = postgres.types.getTypeParser(oid);
+		return result;
+	}
+
+	static setTypeSerializer(serializer:(value:any)=>any) {
+		if ( typeof serializer !== "function" ) return;
+
+		____serializer = serializer;
+	}
+
+	static getTypeSerializer() {
+		return ____serializer;
+	}
+
 	static async init(conn_info:PostgresSessionInitOptions):Promise<PGDelegate> {
 		// @ts-ignore
 		const {user:_1, password:_2, host:_3, database:_4, port:_5, ...conn_options} = conn_info;
@@ -52,28 +74,59 @@ class PGDelegate {
 		const port = parseInt(uri_info.port||'5432');
 
 
-		if ( typeof conn_options.ssl !== "boolean" && Object(conn_options.ssl) === conn_options.ssl ) {
-			const ssl_info = conn_options.ssl!;
-			if ( typeof ssl_info.ca_file === "string" ) {
-				const ca_path = path.resolve(BASE_DIR, ssl_info.ca_file);
-				ssl_info.ca = fs.readFileSync(ca_path).toString('utf8');
-				ssl_info.ca_file = undefined;
+		const search_params = new URLSearchParams(uri_info.search||'');
+		const ssl_mode = search_params.get('sslmode');
+		if ( !ssl_mode || ssl_mode === 'disable' ) {
+			delete conn_options.ssl;
+		}
+		else {
+			let ssl_info = conn_options.ssl;
+			if ( ssl_info === undefined || typeof ssl_info === "boolean" ) {
+				ssl_info = {};
+			}
+			else {
+				if ( typeof ssl_info.ca_file === "string" ) {
+					const ca_path = path.resolve(BASE_DIR, ssl_info.ca_file);
+					ssl_info.ca = fs.readFileSync(ca_path).toString('utf8');
+					ssl_info.ca_file = undefined;
+				}
+
+				if ( typeof ssl_info.cert_file === "string" ) {
+					const cert_path = path.resolve(BASE_DIR, ssl_info.cert_file);
+					ssl_info.cert = fs.readFileSync(cert_path).toString('utf8');
+					ssl_info.cert_file = undefined;
+				}
+
+				if ( typeof ssl_info.key_file === "string" ) {
+					const key_path = path.resolve(BASE_DIR, ssl_info.key_file);
+					ssl_info.key = fs.readFileSync(key_path).toString('utf8');
+					ssl_info.key_file = undefined;
+				}
 			}
 
-			if ( typeof ssl_info.cert_file === "string" ) {
-				const cert_path = path.resolve(BASE_DIR, ssl_info.cert_file);
-				ssl_info.cert = fs.readFileSync(cert_path).toString('utf8');
-				ssl_info.cert_file = undefined;
-			}
 
-			if ( typeof ssl_info.key_file === "string" ) {
-				const key_path = path.resolve(BASE_DIR, ssl_info.key_file);
-				ssl_info.key = fs.readFileSync(key_path).toString('utf8');
-				ssl_info.key_file = undefined;
+
+			switch(ssl_mode) {
+				case 'allow':
+				case 'prefer':
+				case 'require':
+					conn_options.ssl = Object.assign({
+						rejectUnauthorized:false
+					}, ssl_info);
+					break;
+
+				case 'verify-ca':
+				case 'verify-full':
+					conn_options.ssl = Object.assign({
+						rejectUnauthorized:true
+					}, ssl_info);
+					break;
+
+				default:
+					throw new RangeError(`Invalid SSL mode: ${ssl_mode}`);
 			}
 		}
-
-
+		
 
 		const instance = new PGDelegate();
 		const pool = new postgres.Pool({
@@ -128,7 +181,7 @@ class PGDelegate {
 	async query<R1 extends KVData, R2 extends KVData, R3 extends KVData, R4 extends KVData, R5 extends KVData, R6 extends KVData, R7 extends KVData, R8 extends KVData, ValueType extends any[]=any>(text:string, values?:ValueType):Promise<[QueryResult<R1>, QueryResult<R2>, QueryResult<R3>, QueryResult<R4>, QueryResult<R5>, QueryResult<R6>, QueryResult<R7>, QueryResult<R8>]>;
 	async query<R1 extends KVData, R2 extends KVData, R3 extends KVData, R4 extends KVData, R5 extends KVData, R6 extends KVData, R7 extends KVData, R8 extends KVData, R9 extends KVData, ValueType extends any[]=any>(text:string, values?:ValueType):Promise<[QueryResult<R1>, QueryResult<R2>, QueryResult<R3>, QueryResult<R4>, QueryResult<R5>, QueryResult<R6>, QueryResult<R7>, QueryResult<R8>, QueryResult<R9>]>;
 	async query<R1 extends KVData, R2 extends KVData, R3 extends KVData, R4 extends KVData, R5 extends KVData, R6 extends KVData, R7 extends KVData, R8 extends KVData, R9 extends KVData, R10 extends KVData, ValueType extends any[]=any>(text:string, values?:ValueType):Promise<[QueryResult<R1>, QueryResult<R2>, QueryResult<R3>, QueryResult<R4>, QueryResult<R5>, QueryResult<R6>, QueryResult<R7>, QueryResult<R8>, QueryResult<R9>, QueryResult<R10>]>;
-	async query<ValueType extends any[]=any>(text:string, values?:ValueType):Promise<QueryResult<any>|QueryResult<any>[]> {
+	async query<ValueType extends any[]=any>(text:string, values?:ValueType):Promise<any> {
 		const pool = __PGDelegate.get(this)!.pool;
 		if ( !pool ) throw new Error("Postgres connection has been dropped!");
 
@@ -138,7 +191,10 @@ class PGDelegate {
 		return await Promise.resolve()
 		.then(async()=>{
 			if ( values !== undefined ) {
-				return await inst_client.query(text, values);
+				const incomint_values = values.map(____serializer);
+
+				// @ts-ignore
+				return await inst_client.query(text, incomint_values);
 			}
 			else {
 				return await inst_client.query(text);
@@ -173,7 +229,8 @@ class PGDelegate {
 		.then(async()=>{
 			if ( values !== undefined ) {
 				const result = ParseVarMap(text, values||{});
-				const final_sql = PGFormat(result.sql, ...result.values);
+				const incomint_values = result.values.map(____serializer);
+				const final_sql = PGFormat(result.sql, ...incomint_values);
 				return await inst_client.query(final_sql);
 			}
 			else {
@@ -212,8 +269,9 @@ class PGDelegate {
 	*/
 };
 
-export {PGDelegate};
-
+const PGTypes:typeof postgres.types.builtins = postgres.types.builtins;
+export {PGDelegate, PGTypes};
+export default PGDelegate;
 
 
 

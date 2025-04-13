@@ -1,4 +1,3 @@
-/// <reference types="node" />
 /**
  *	Author: cheny
  *	Create: 2021-08-10
@@ -29,11 +28,15 @@ interface SSLOptions extends TLS.SecureContextOptions, TLS.CommonConnectionOptio
     cert_file?: string;
     key_file?: string;
 }
-export declare type PostgresSessionInitOptions = {
+export type PostgresSessionInitOptions = {
     uri: string;
     ssl?: boolean | SSLOptions;
 } & Omit<postgres.PoolConfig, 'user' | 'password' | 'database' | 'port' | 'ssl'>;
 declare class PGDelegate {
+    static setTypeParser(oid: number, parser: (value: string | null) => any): typeof PGDelegate;
+    static getTypeParser(oid: number): any;
+    static setTypeSerializer(serializer: (value: any) => any): void;
+    static getTypeSerializer(): (value: any) => any;
     static init(conn_info: PostgresSessionInitOptions): Promise<PGDelegate>;
     static format(text: string, values?: ({
         [key: string]: any;
@@ -81,4 +84,6 @@ declare class PGDelegate {
         [key: string]: any;
     } = {}>(text: string, values?: ValueType): Promise<[QueryResult<R1>, QueryResult<R2>, QueryResult<R3>, QueryResult<R4>, QueryResult<R5>, QueryResult<R6>, QueryResult<R7>, QueryResult<R8>, QueryResult<R9>, QueryResult<R10>]>;
 }
-export { PGDelegate };
+declare const PGTypes: typeof postgres.types.builtins;
+export { PGDelegate, PGTypes };
+export default PGDelegate;

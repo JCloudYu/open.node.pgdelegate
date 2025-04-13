@@ -1,12 +1,12 @@
 {
 	"name": "pgdelegate",
-	"version": "0.6.9",
+	"version": "0.6.10",
 	"description": "A library provides easy use of PostgresSQL library",
 	"main": "_dist/pgdelegate.js",
 	"scripts": {
 		"prebuild": "rm -rf _dist",
 		"build": "tsc",
-		"postbuild": "copyfiles -e \"./node_modules/**/*\" -e \"./_dist/**/*\" \"./**/*.js\" \"./**/*.d.ts\" ./_dist"
+		"postbuild": "copyfiles -e \"./node_modules/**/*\" -e \"./tests/**/*\" -e \"./_dist/**/*\" \"./**/*.js\" \"./**/*.d.ts\" ./_dist"
 	},
 	"keywords": [
 		"Postgre",
