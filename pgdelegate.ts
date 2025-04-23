@@ -394,6 +394,10 @@ function EatEscape(sql:string, idx:number):{parts:string; idx:number} {
 		case "\\{":
 			str = "{";
 			break;
+
+		case "\\[":
+			str = "[";
+			break;
 		
 		default:
 			break;

@@ -404,6 +404,9 @@ function EatEscape(sql, idx) {
         case "\\{":
             str = "{";
             break;
+        case "\\[":
+            str = "[";
+            break;
         default:
             break;
     }
