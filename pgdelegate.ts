@@ -403,7 +403,7 @@ function EatEscape(sql:string, idx:number):{parts:string; idx:number} {
 			break;
 	}
 
-	return {parts:str, idx:idx+str.length};
+	return {parts:str, idx:idx+2};
 }
 function EatValue(sql:string, idx:number):{key:string; idx:number} {
 	let to = idx;

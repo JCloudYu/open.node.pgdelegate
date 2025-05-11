@@ -410,7 +410,7 @@ function EatEscape(sql, idx) {
         default:
             break;
     }
-    return { parts: str, idx: idx + str.length };
+    return { parts: str, idx: idx + 2 };
 }
 function EatValue(sql, idx) {
     var to = idx;
